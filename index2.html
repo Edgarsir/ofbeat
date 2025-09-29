@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Clean & Minimal Animation — Parallax + Custom Cursor (Smooth)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;700&family=Inter:wght@300;400;700&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Base styles */
+        .section2 { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #111; 
+            color: #fff; 
+            overflow-x: hidden; 
+        }
+
+        /* Preloader */
+        .ob-preloader { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background-color: #111; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 2.5rem; 
+            z-index: 1000; 
+            pointer-events: none; 
+        }
+        
+        .ob-preloader-logo { 
+            font-family: 'Cormorant Garamond', serif; 
+            font-weight: 700; 
+            font-size: 2.5rem; 
+            letter-spacing: 0.1em; 
+            opacity: 0; 
+        }
+        
+        .ob-preloader-counter { 
+            font-family: 'Inter', sans-serif; 
+            font-weight: 400; 
+            font-size: 1.5rem; 
+            opacity: 0; 
+        }
+
+        /* Main container */
+        .ob-main-container { 
+            position: sticky; 
+            top: 0; 
+            width: 100vw; 
+            height: 100vh; 
+            overflow: hidden; 
+            z-index: 2; 
+        }
+        
+        .ob-slides-container { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            overflow: hidden; 
+        }
+
+        .ob-slide { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background-size: cover; 
+            background-position: center center; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            opacity: 0; 
+            visibility: hidden; 
+            transform: scale(1.05); 
+            will-change: opacity, transform; 
+        }
+
+        /* Foreground content */
+        .ob-foreground-content { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: space-between; 
+            padding: 2.5rem; 
+            mix-blend-mode: difference; 
+            pointer-events: none; 
+            z-index: 30; 
+        }
+        
+        .ob-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            width: 100%; 
+            pointer-events: auto; 
+        }
+        
+        .ob-logo { 
+            font-family: 'Cormorant Garamond', serif; 
+            font-weight: 700; 
+            font-size: 1.5rem; 
+            letter-spacing: 0.1em; 
+        }
+        
+        .ob-nav a { 
+            margin-left: 2rem; 
+            font-size: 0.875rem; 
+            letter-spacing: 0.1em; 
+            text-transform: uppercase; 
+            color: inherit; 
+            text-decoration: none; 
+            transition: opacity 0.3s ease;
+        }
+        
+        .ob-nav a:hover {
+            opacity: 0.7;
+        }
+
+        /* Marquee */
+        .ob-marquee-container { 
+            height: 100%; 
+            overflow: hidden; 
+            position: absolute; 
+            top: 0; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            pointer-events: none; 
+            display: flex; 
+            flex-direction: row; 
+            z-index: 20; 
+        }
+        
+        .ob-marquee-text { 
+            display: flex; 
+            flex-direction: column; 
+            flex-shrink: 0; 
+            white-space: nowrap; 
+            font-family: 'Inter', sans-serif; 
+            text-transform: uppercase; 
+            font-size: 10rem; 
+            writing-mode: vertical-rl; 
+            letter-spacing: -0.05em; 
+        }
+        
+        .ob-marquee-top { 
+            font-weight: 100 !important; 
+            opacity: 0.3; 
+            color: transparent; 
+            -webkit-text-stroke: 1px #fff; 
+            text-stroke: 1px #fff; 
+        }
+        
+        .ob-marquee-bottom { 
+            font-weight: 700; 
+        }
+
+        /* Second section with overlay effect */
+        .ob-second-section {
+            position: relative;
+            z-index: 3;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #1a1a1a;
+            color: #fff;
+            transform: translateY(100%);
+            opacity: 0;
+            pointer-events: none;
+            will-change: transform, opacity;
+        }
+        
+        .ob-second-section.in-view { 
+            pointer-events: auto; 
+        }
+
+        .page-spacer { 
+            height: 400vh; 
+        }
+
+        /* Parallax helpers */
+        .parallax { 
+            will-change: transform; 
+            -webkit-transform: translate3d(0,0,0); 
+        }
+        
+        .ob-slide .parallax-layer { 
+            position: absolute; 
+            inset: 0; 
+            background-repeat: no-repeat; 
+            background-position: center; 
+            background-size: cover; 
+            will-change: transform; 
+            -webkit-transform: translate3d(0,0,0); 
+        }
+
+        /* Custom cursor */
+        .cursor, .cursor-follower { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            border-radius: 50%; 
+            pointer-events: none; 
+            transform: translate(-50%, -50%); 
+            z-index: 9999; 
+            transition: transform 0.18s ease-out, width 0.18s ease-out, height 0.18s ease-out, background-color 0.18s; 
+            mix-blend-mode: difference; 
+        }
+        
+        .cursor { 
+            width: 18px; 
+            height: 18px; 
+            background: rgba(255,255,255,0.95); 
+        }
+        
+        .cursor-follower { 
+            width: 42px; 
+            height: 42px; 
+            background: rgba(255,255,255,0.06); 
+            transition: transform 0.28s cubic-bezier(.2,.9,.2,1); 
+        }
+        
+        .cursor.hidden, .cursor-follower.hidden { 
+            opacity: 0; 
+        }
+        
+        .cursor.hover, .cursor-follower.hover { 
+            transform: translate(-50%, -50%) scale(1.6); 
+        }
+
+        .is-locked { 
+            transform: translate(-50%, -50%) scale(0.9); 
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .ob-preloader { padding: 1.5rem; }
+            .ob-preloader-logo { font-size: 1.5rem; }
+            .ob-preloader-counter { font-size: 1rem; }
+            .ob-foreground-content { padding: 1.5rem; }
+            .ob-logo { font-size: 1.25rem; }
+            .ob-nav a { margin-left: 1rem; font-size: 0.75rem; }
+            .ob-marquee-text { font-size: 4rem; }
+            .ob-second-section h2 { font-size: 2.5rem; }
+            .ob-main-container { height: 60vh; }
+            .cursor, .cursor-follower { display: none; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .cursor, .cursor-follower { transition: none; }
+            .ob-marquee-text {
+                animation: none !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<section class="section2">
+
+    <!-- Preloader -->
+    <div class="ob-preloader" id="ob-preloader">
+        <div class="ob-preloader-logo">Offbeat</div>
+        <div class="ob-preloader-counter" id="ob-preloader-counter">0</div>
+    </div>
+
+    <!-- Sticky Hero Section -->
+    <div class="ob-main-container" id="ob-main-container">
+        <div class="ob-slides-container" id="ob-slides-container"></div>
+
+        <div class="ob-foreground-content" id="ob-foreground-content">
+            <header class="ob-header">
+                <div class="ob-logo">Offbeat</div>
+                <nav class="ob-nav">
+                    <a href="#" class="interactive">JOURNAL</a>
+                    <a href="#" class="interactive">ABOUT</a>
+                </nav>
+            </header>
+
+            <div class="ob-marquee-container parallax" id="ob-marquee-container">
+                <div class="ob-marquee-text ob-marquee-top parallax" id="ob-marquee-top">
+                    <span class="ob-marquee-content">COLLECTION EARPHONE HEADPHONE PLAYERACCESSORY EAR PIECE ALL COLLECTIONS&nbsp;</span>
+                </div>
+                <div class="ob-marquee-text ob-marquee-bottom parallax" id="ob-marquee-bottom">
+                    <span class="ob-marquee-content">COLLECTION EARPHONE HEADPHONE PLAYERACCESSORY EAR PIECE ALL COLLECTIONS&nbsp;</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Spacer for scrolling -->
+    <div class="page-spacer" id="page-spacer"></div>
+
+    <!-- Second Section with Overlay Effect -->
+    <section class="ob-second-section" id="ob-second-section">
+        <h2 style="font-family:'Cormorant Garamond'; font-size:3.6rem; font-weight:300; margin:0;">A New Section To Scroll Into</h2>
+    </section>
+
+    <!-- Custom cursor elements -->
+    <div class="cursor" id="cursor"></div>
+    <div class="cursor-follower" id="cursor-follower"></div>
+
+    <script src="https://unpkg.com/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Slide data
+            const desktopSlideData = [
+                { bgImage: 'https://earcouture.jp/asset/img/home/mv_01.jpg' },
+                { bgImage: 'https://earcouture.jp/asset/img/home/mv_02.jpg' },
+                { bgImage: 'https://earcouture.jp/asset/img/home/mv_03.jpg' },
+                { bgImage: 'https://earcouture.jp/asset/img/home/mv_04.jpg' },
+                { bgImage: 'https://earcouture.jp/asset/img/home/mv_05.jpg' }
+            ];
+
+            const mobileSlideData = [
+                { bgImage: 'https://earcouture.jp/asset/img/home/mvsp_01.jpg' },
+                { bgImage: 'https://earcouture.jp/asset/img/home/mvsp_02.jpg' },
+                { bgImage: 'https://earcouture.jp/asset/img/home/mvsp_03.jpg' },
+                { bgImage: 'https://earcouture.jp/asset/img/home/mvsp_04.jpg' },
+                { bgImage: 'https://earcouture.jp/asset/img/home/mvsp_05.jpg' }
+            ];
+
+            const activeSlideData = window.innerWidth <= 768 ? mobileSlideData : desktopSlideData;
+            const slidesContainer = document.getElementById('ob-slides-container');
+
+            // Create slides
+            activeSlideData.forEach((data, i) => {
+                const slide = document.createElement('div');
+                slide.classList.add('ob-slide');
+                slide.style.backgroundImage = `url(${data.bgImage})`;
+                slide.dataset.index = i;
+
+                const layer = document.createElement('div');
+                layer.className = 'parallax-layer parallax';
+                layer.style.backgroundImage = `url(${data.bgImage})`;
+                layer.dataset.depth = (0.8 + Math.random() * 0.6).toFixed(2);
+                slide.appendChild(layer);
+
+                slidesContainer.appendChild(slide);
+            });
+
+            const slides = gsap.utils.toArray('.ob-slide');
+            gsap.set(slides[0], { opacity: 1, visibility: 'visible', scale: 1 });
+
+            // Main timeline
+            const masterTimeline = gsap.timeline({ 
+                repeat: -1, 
+                defaults: { duration: 1.5, ease: 'power2.inOut' } 
+            });
+            
+            slides.forEach((slide, index) => {
+                const nextIndex = (index + 1) % slides.length;
+                const nextSlide = slides[nextIndex];
+
+                masterTimeline
+                    .to(slide, { scale: 1, opacity: 0, duration: 4, ease: 'power1.inOut' })
+                    .to(nextSlide, { opacity: 1, visibility: 'visible', duration: 1.5, ease: 'power2.inOut' }, ">-1.5")
+                    .set(slide, { visibility: 'hidden', scale: 1.05 });
+            });
+
+            // Marquee animation
+            gsap.to('#ob-marquee-top .ob-marquee-content', { 
+                yPercent: -50, 
+                duration: 25, 
+                ease: 'linear', 
+                repeat: -1 
+            });
+            
+            gsap.to('#ob-marquee-bottom .ob-marquee-content', { 
+                yPercent: 50, 
+                duration: 25, 
+                ease: 'linear', 
+                repeat: -1 
+            });
+
+            // Preloader
+            gsap.set('#ob-main-container', { autoAlpha: 0 });
+            const counter = { value: 0 };
+            const counterElement = document.getElementById('ob-preloader-counter');
+            const preloaderTl = gsap.timeline();
+            
+            preloaderTl
+                .to(['.ob-preloader-logo', '.ob-preloader-counter'], { 
+                    autoAlpha: 1, 
+                    duration: 1, 
+                    ease: 'power2.inOut' 
+                })
+                .to(counter, { 
+                    value: 100, 
+                    duration: 2.5, 
+                    ease: 'power2.inOut', 
+                    onUpdate: () => { 
+                        counterElement.textContent = Math.round(counter.value); 
+                    } 
+                }, "-=0.5")
+                .to(['.ob-preloader-logo', '.ob-preloader-counter'], { 
+                    autoAlpha: 0, 
+                    duration: 1, 
+                    ease: 'power2.inOut' 
+                }, "+=0.5")
+                .to('.ob-preloader', { 
+                    autoAlpha: 0, 
+                    duration: 1.2, 
+                    ease: 'power3.inOut' 
+                })
+                .to('#ob-main-container', { 
+                    autoAlpha: 1, 
+                    duration: 1.2, 
+                    ease: 'power2.inOut' 
+                }, "-=1");
+
+            // Custom cursor with heavy feel
+            const cursor = document.getElementById('cursor');
+            const follower = document.getElementById('cursor-follower');
+            let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
+            let followerX = mouseX, followerY = mouseY;
+
+            const setCursor = (x,y) => {
+                cursor.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
+            };
+            
+            const setFollower = (x,y) => {
+                follower.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
+            };
+
+            // Slower lerp for heavy feeling
+            function lerp(a,b,n){ return (1-n)*a + n*b; }
+
+            window.addEventListener('mousemove', (e) => {
+                mouseX = e.clientX; 
+                mouseY = e.clientY;
+                setCursor(mouseX, mouseY); // immediate for cursor
+            });
+
+            // Hover states
+            document.querySelectorAll('.interactive, a, button').forEach(el => {
+                el.addEventListener('mouseenter', () => { 
+                    cursor.classList.add('hover'); 
+                    follower.classList.add('hover'); 
+                });
+                el.addEventListener('mouseleave', () => { 
+                    cursor.classList.remove('hover'); 
+                    follower.classList.remove('hover'); 
+                });
+            });
+            
+            window.addEventListener('mouseenter', () => { 
+                cursor.classList.remove('hidden'); 
+                follower.classList.remove('hidden'); 
+            });
+            
+            window.addEventListener('mouseleave', () => { 
+                cursor.classList.add('hidden'); 
+                follower.classList.add('hidden'); 
+            });
+
+            // Lenis with heavy smoothing
+            const lenis = new Lenis({
+                duration: 2.2,         // much longer = heavier, slower
+                easing: (t) => 1 - Math.pow(1 - t, 3),
+                smooth: true,
+                wheelMultiplier: 0.55, // less responsive wheel = heavier
+                smoothTouch: true
+            });
+
+            // Overlay tuning:
+            // overlayRange: how many viewport-heights the overlay spans (1 = overlay completes by 1 viewport scroll).
+            // Use >1 to make overlay take longer (so it feels heavy)
+            const overlayRange = 1.6; // increase to make overlay slower (1.6 x viewport height)
+
+            // Easing function for progress (easeOutCubic)
+            function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+
+            // Unified RAF loop
+            function raf(time) {
+                lenis.raf(time);
+
+                // Smoothed scroll value
+                const scroll = (lenis.animatedScroll !== undefined) ? 
+                    lenis.animatedScroll : window.scrollY || window.pageYOffset || 0;
+
+                // Cursor follower lerp (slower for heavy feel)
+                followerX = lerp(followerX, mouseX, 0.08);
+                followerY = lerp(followerY, mouseY, 0.08);
+                setFollower(followerX, followerY);
+
+                // Mouse normalized values for parallax
+                const mx = ((mouseX / window.innerWidth) - 0.5);
+                const my = ((mouseY / window.innerHeight) - 0.5);
+
+                // Parallax layers: combine mouse and scroll
+                document.querySelectorAll('.parallax-layer').forEach(layer => {
+                    const depth = parseFloat(layer.dataset.depth || 1);
+                    const moveX = mx * 20 * depth;
+                    const moveYMouse = my * 20 * depth;
+
+                    const scrollFactor = Math.max(0, Math.min(1, scroll / window.innerHeight));
+                    const scrollY = (scrollFactor - 0.5) * 30 * (1 - depth);
+
+                    const finalY = moveYMouse + scrollY;
+                    const scale = 1 + (depth - 1) * 0.03;
+                    layer.style.transform = `translate3d(${moveX}px, ${finalY}px, 0) scale(${scale})`;
+                });
+
+                // Foreground slight parallax with scroll (subtle)
+                const foreground = document.getElementById('ob-foreground-content');
+                if (foreground) {
+                    foreground.style.transform = `translate3d(0, ${scroll * 0.04}px, 0)`;
+                }
+
+                // Marquee nudge
+                const marquee = document.getElementById('ob-marquee-container');
+                if (marquee) {
+                    marquee.style.transform = `translateX(calc(-50% + ${-mx * 30}px)) translateY(${scroll * 0.015}px)`;
+                }
+
+                // Slide-specific parallax (center-relative) - keep subtle
+                document.querySelectorAll('.ob-slide').forEach(slide => {
+                    const rect = slide.getBoundingClientRect();
+                    const slideCenter = rect.top + rect.height / 2;
+                    const rel = (slideCenter - window.innerHeight/2) / window.innerHeight;
+                    slide.querySelectorAll('.parallax-layer').forEach(layer => {
+                        const depth = parseFloat(layer.dataset.depth || 1);
+                        const translateY = rel * 30 * (1 - depth);
+                        const moveX = mx * 20 * depth;
+                        const moveY = my * 20 * depth + translateY;
+                        const scale = 1 + (depth - 1) * 0.03;
+                        layer.style.transform = `translate3d(${moveX}px, ${moveY}px, 0) scale(${scale})`;
+                    });
+                });
+
+                // Overlay: compute eased progress over overlayRange viewports
+                const progressRaw = Math.max(0, Math.min(1, scroll / (window.innerHeight * overlayRange)));
+                const progress = easeOutCubic(progressRaw); // eased 0..1
+
+                const secondSection = document.getElementById('ob-second-section');
+                if (secondSection) {
+                    // Translate from 120% -> 0% for a bit more dramatic start
+                    const translateY = (1 - progress) * 120; // percent
+                    // Opacity ramp slightly delayed for heavy feel
+                    const opacity = Math.max(0, Math.min(1, (progressRaw - 0.06) / 0.94)); // small delay then 0->1
+                    secondSection.style.transform = `translateY(${translateY}%)`;
+                    secondSection.style.opacity = String(opacity);
+
+                    if (progressRaw > 0.9) {
+                        secondSection.classList.add('in-view'); 
+                    } else {
+                        secondSection.classList.remove('in-view');
+                    }
+                }
+
+                requestAnimationFrame(raf);
+            }
+
+            requestAnimationFrame(raf);
+
+            // Reduced motion fallback
+            if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                try { 
+                    if (lenis && typeof lenis.destroy === 'function') lenis.destroy(); 
+                } catch(e){}
+                follower.style.transition = 'none';
+            }
+
+            // Ensure Lenis refresh after preloader completes
+            preloaderTl.eventCallback('onComplete', () => {
+                try { 
+                    if (lenis && typeof lenis.update === 'function') lenis.update(); 
+                } catch(e){}
+            });
+
+            // Accessibility: tab focusable nav links
+            document.querySelectorAll('.ob-nav a').forEach(a => a.setAttribute('tabindex','0'));
+        });
+    </script>
+</section>
+</body>
+</html>
